@@ -1,20 +1,27 @@
 from fastapi import APIRouter, Depends
 from app.core.config import ENV
 from app.models.response import ApiResponse
-from typing import Dict, Any
+from pydantic import BaseModel
+from fastapi import Form
+
+class item(BaseModel) :
+    name : str
+    age : int
+
 
 router = APIRouter()
 
-@router.get("/")
-async def test_endpoint() -> ApiResponse[Dict[str, Any]]:
+
+@router.post("/")
+async def test_endpoint(name: str = Form(...), age: int = Form(...)):
     """测试端点"""
     return ApiResponse.success(
         data={
             "status": "ok",
             "environment": ENV,
-            "message": "测试API端点工作正常"
+            "message": name
         },
-        message="测试成功"
+        message="222"
     )
 
 @router.get("/error")

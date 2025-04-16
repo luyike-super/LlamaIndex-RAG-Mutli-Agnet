@@ -1,7 +1,7 @@
 from typing import Generic, TypeVar, Optional, Any, Dict, List
 from enum import Enum
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 # 定义泛型类型变量
 T = TypeVar('T')
@@ -25,11 +25,19 @@ class ApiResponse(BaseModel, Generic[T]):
     data: Optional[T] = Field(None, description="响应数据")
     timestamp: datetime = Field(default_factory=datetime.now, description="响应时间戳")
     
-    class Config:
-        """配置"""
-        json_encoders = {
+    model_config = ConfigDict(
+        json_encoders={
             datetime: lambda dt: dt.isoformat()
         }
+    )
+    
+    def dict(self, **kwargs):
+        """返回字典并处理datetime序列化"""
+        result = self.model_dump(**kwargs)
+        # 手动处理timestamp
+        if isinstance(result.get("timestamp"), datetime):
+            result["timestamp"] = result["timestamp"].isoformat()
+        return result
     
     @classmethod
     def success(cls, data: Optional[T] = None, message: str = "操作成功") -> "ApiResponse[T]":

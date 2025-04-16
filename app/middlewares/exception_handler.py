@@ -5,6 +5,16 @@ from starlette.exceptions import HTTPException
 from app.models.response import ApiResponse, ResponseCode
 import traceback
 from typing import Union, Dict, Any
+import json
+from datetime import datetime
+
+
+# 自定义JSON编码器，处理datetime
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
 
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
@@ -28,6 +38,7 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
         message=str(exc.detail),
     )
     
+    # 使用dict方法处理序列化
     return JSONResponse(
         status_code=exc.status_code,
         content=response.dict()
@@ -51,6 +62,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         data=error_details
     )
     
+    # 使用dict方法处理序列化
     return JSONResponse(
         status_code=400,
         content=response.dict()
@@ -70,6 +82,7 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
         message="服务器内部错误"
     )
     
+    # 使用dict方法处理序列化
     return JSONResponse(
         status_code=500,
         content=response.dict()

@@ -1,21 +1,23 @@
-from typing import Callable, Any
+from typing import Callable, Any, Dict
 from fastapi import FastAPI, Request, Response
 from fastapi.routing import APIRoute
 from fastapi.responses import JSONResponse
 import inspect
 from starlette.background import BackgroundTask
+from starlette.types import ASGIApp, Receive, Scope, Send
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from app.models.response import ApiResponse
 
 
-class ResponseWrapperMiddleware:
+class ResponseWrapperMiddleware(BaseHTTPMiddleware):
     """
     响应包装中间件：自动将API响应包装为统一格式
+    使用BaseHTTPMiddleware简化ASGI处理
     """
     
-    def __init__(self, app: FastAPI):
-        self.app = app
-    
-    async def __call__(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
         # 调用下一个中间件或路由处理函数
         response = await call_next(request)
         

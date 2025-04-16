@@ -24,6 +24,13 @@ class BaseAppSettings(BaseSettings):
     DATA_DIR: str = os.getenv("DATA_DIR", "data")
     INDEX_DIR: str = os.getenv("INDEX_DIR", "index")
     
+    # 数据库配置
+    DB_HOST: str = os.getenv("DB_HOST", "localhost")
+    DB_PORT: int = int(os.getenv("DB_PORT", "5432"))
+    DB_USER: str = os.getenv("DB_USER", "postgres")
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "postgres")
+    DB_NAME: str = os.getenv("DB_NAME", "llamakb")
+    
     # CORS配置 - 基础设置
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: List[str] = ["*"]
