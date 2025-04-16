@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
 from app.core.config import settings, ENV
+from app.middlewares.response_wrapper import register_response_middleware
+from app.middlewares.exception_handler import register_exception_handlers
 
 # 创建应用
 app = FastAPI(
@@ -21,6 +23,12 @@ app.add_middleware(
     allow_methods=settings.CORS_ALLOW_METHODS,
     allow_headers=settings.CORS_ALLOW_HEADERS,
 )
+
+# 注册统一响应中间件
+register_response_middleware(app)
+
+# 注册异常处理器
+register_exception_handlers(app)
 
 # 注册路由
 app.include_router(api_router, prefix=settings.API_V1_STR)
