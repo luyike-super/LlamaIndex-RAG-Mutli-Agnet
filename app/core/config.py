@@ -1,24 +1,32 @@
 import os
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
 # 加载环境变量
 load_dotenv()
 
-# 获取当前环境
-ENV = os.getenv("ENVIRONMENT", "development")
-
-
-class BaseAppSettings(BaseSettings):
-    """基础配置"""
+class AppSettings(BaseSettings):
+    """应用配置"""
     API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "LlamaKB"
-    PROJECT_DESCRIPTION: str = "基于LlamaIndex和FastAPI的RAG应用"
-    VERSION: str = "0.1.0"
+    PROJECT_NAME: str = os.getenv("PROJECT_NAME", "LlamaKB")
+    PROJECT_DESCRIPTION: str = os.getenv("PROJECT_DESCRIPTION", "基于LlamaIndex和FastAPI的RAG应用")
+    VERSION: str = os.getenv("VERSION", "0.1.0")
+    
+    # 调试设置
+    DEBUG: bool = os.getenv("DEBUG", "true").lower() == "true"
     
     # OpenAI配置
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
+    
+    # DeepSeek配置
+    DEEPSEEK_API_KEY: Optional[str] = os.getenv("DEEPSEEK_API_KEY")
+    DEEPSEEK_API_BASE: Optional[str] = os.getenv("DEEPSEEK_API_BASE")
+    DEEPSEEK_MODEL: Optional[str] = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+    
+    # DashScope配置
+    DASHSCOPE_API_KEY: Optional[str] = os.getenv("DASHSCOPE_API_KEY")
+    DASHSCOPE_API_BASE: Optional[str] = os.getenv("DASHSCOPE_API_BASE")
     
     # 数据存储路径
     DATA_DIR: str = os.getenv("DATA_DIR", "data")
@@ -31,59 +39,20 @@ class BaseAppSettings(BaseSettings):
     DB_PASSWORD: str = os.getenv("DB_PASSWORD", "postgres")
     DB_NAME: str = os.getenv("DB_NAME", "llamakb")
     
-    # CORS配置 - 基础设置
+    # CORS配置 - 允许所有跨域请求
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: List[str] = ["*"]
     CORS_ALLOW_HEADERS: List[str] = ["*"]
+    CORS_ALLOW_ORIGINS: List[str] = ["*"]
+    
+    # 超时设置
+    OPENAI_TIMEOUT: int = int(os.getenv("OPENAI_TIMEOUT", "60"))
+    DEEPSEEK_TIMEOUT: int = int(os.getenv("DEEPSEEK_TIMEOUT", "60"))
     
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = True
 
-
-class DevelopmentSettings(BaseAppSettings):
-    """开发环境配置"""
-    DEBUG: bool = True
-    
-    # 开发环境允许所有跨域请求
-    CORS_ALLOW_ORIGINS: List[str] = ["*"]
-
-
-class TestingSettings(BaseAppSettings):
-    """测试环境配置"""
-    DEBUG: bool = True
-    TESTING: bool = True
-    
-    # 测试环境允许特定域名
-    CORS_ALLOW_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "http://test.llamakb.com",
-    ]
-
-
-class ProductionSettings(BaseAppSettings):
-    """生产环境配置"""
-    DEBUG: bool = False
-    
-    # 生产环境只允许特定域名
-    CORS_ALLOW_ORIGINS: List[str] = [
-        "https://llamakb.com",
-        "https://api.llamakb.com",
-        "https://admin.llamakb.com",
-    ]
-    
-    # 生产环境其他配置
-    OPENAI_TIMEOUT: int = 60
-
-
-# 配置映射
-environments: Dict[str, Any] = {
-    "development": DevelopmentSettings,
-    "testing": TestingSettings,
-    "production": ProductionSettings,
-}
-
-# 根据环境变量加载对应的配置
-settings: Union[DevelopmentSettings, TestingSettings, ProductionSettings] = environments[ENV]() 
+# 创建单一设置实例
+settings = AppSettings() 

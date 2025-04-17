@@ -23,21 +23,11 @@ class ApiResponse(BaseModel, Generic[T]):
     code: str = Field(ResponseCode.SUCCESS, description="响应代码")
     message: str = Field("操作成功", description="响应消息")
     data: Optional[T] = Field(None, description="响应数据")
-    timestamp: datetime = Field(default_factory=datetime.now, description="响应时间戳")
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat(), description="响应时间戳")
     
     model_config = ConfigDict(
-        json_encoders={
-            datetime: lambda dt: dt.isoformat()
-        }
+        arbitrary_types_allowed=True
     )
-    
-    def dict(self, **kwargs):
-        """返回字典并处理datetime序列化"""
-        result = self.model_dump(**kwargs)
-        # 手动处理timestamp
-        if isinstance(result.get("timestamp"), datetime):
-            result["timestamp"] = result["timestamp"].isoformat()
-        return result
     
     @classmethod
     def success(cls, data: Optional[T] = None, message: str = "操作成功") -> "ApiResponse[T]":
@@ -45,7 +35,8 @@ class ApiResponse(BaseModel, Generic[T]):
         return cls(
             code=ResponseCode.SUCCESS,
             message=message,
-            data=data
+            data=data,
+            timestamp=datetime.now().isoformat()
         )
     
     @classmethod
@@ -57,7 +48,8 @@ class ApiResponse(BaseModel, Generic[T]):
         return cls(
             code=code,
             message=message,
-            data=data
+            data=data,
+            timestamp=datetime.now().isoformat()
         )
     
     @classmethod
@@ -66,7 +58,8 @@ class ApiResponse(BaseModel, Generic[T]):
         return cls(
             code=ResponseCode.BAD_REQUEST,
             message=message,
-            data=data
+            data=data,
+            timestamp=datetime.now().isoformat()
         )
     
     @classmethod
@@ -75,7 +68,8 @@ class ApiResponse(BaseModel, Generic[T]):
         return cls(
             code=ResponseCode.UNAUTHORIZED,
             message=message,
-            data=data
+            data=data,
+            timestamp=datetime.now().isoformat()
         )
     
     @classmethod
@@ -84,7 +78,8 @@ class ApiResponse(BaseModel, Generic[T]):
         return cls(
             code=ResponseCode.FORBIDDEN,
             message=message,
-            data=data
+            data=data,
+            timestamp=datetime.now().isoformat()
         )
     
     @classmethod
@@ -93,7 +88,8 @@ class ApiResponse(BaseModel, Generic[T]):
         return cls(
             code=ResponseCode.NOT_FOUND,
             message=message,
-            data=data
+            data=data,
+            timestamp=datetime.now().isoformat()
         )
     
     @classmethod
@@ -102,7 +98,8 @@ class ApiResponse(BaseModel, Generic[T]):
         return cls(
             code=ResponseCode.INTERNAL_ERROR,
             message=message,
-            data=data
+            data=data,
+            timestamp=datetime.now().isoformat()
         )
 
 

@@ -3,16 +3,10 @@ import os
 import sys
 import argparse
 import uvicorn
+from dotenv import load_dotenv
 
 def main():
     parser = argparse.ArgumentParser(description="LlamaKB 服务启动脚本")
-    parser.add_argument(
-        "--env", 
-        type=str, 
-        default="development", 
-        choices=["development", "testing", "production"],
-        help="运行环境 (development/testing/production)"
-    )
     parser.add_argument(
         "--host", 
         type=str, 
@@ -28,33 +22,28 @@ def main():
     parser.add_argument(
         "--reload", 
         action="store_true", 
-        help="是否自动重载（仅适用于开发环境）"
+        help="是否自动重载"
     )
     
     args = parser.parse_args()
     
-    # 设置环境变量
-    os.environ["ENVIRONMENT"] = args.env
+    # 加载.env配置文件
+    if os.path.exists(".env"):
+        print("加载环境配置: .env")
+        load_dotenv()
     
-    # 加载对应环境的配置文件
-    env_file = f".env.{args.env}"
-    if os.path.exists(env_file):
-        print(f"加载环境配置: {env_file}")
-        # dotenv只会在加载时覆盖尚未设置的环境变量，
-        # 因此我们先手动设置ENVIRONMENT，确保它不会被覆盖
-        from dotenv import load_dotenv
-        load_dotenv(env_file)
+    # 获取调试模式设置
+    debug_mode = os.getenv("DEBUG", "true").lower() == "true"
     
     # 启动服务
-    reload_option = args.reload and args.env != "production"
-    print(f"启动服务: 环境={args.env}, 主机={args.host}, 端口={args.port}, 自动重载={reload_option}")
+    print(f"启动服务: 主机={args.host}, 端口={args.port}, 自动重载={args.reload}")
     
     uvicorn.run(
         "app.main:app", 
         host=args.host, 
         port=args.port, 
-        reload=reload_option,
-        log_level="info" if args.env == "production" else "debug"
+        reload=args.reload,
+        log_level="debug" if debug_mode else "info"
     )
 
 if __name__ == "__main__":

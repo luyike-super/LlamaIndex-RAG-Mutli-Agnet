@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.core.config import ENV
+from app.core.config import settings
 from app.models.response import ApiResponse
 from pydantic import BaseModel
 from fastapi import Form
@@ -18,7 +18,6 @@ async def test_endpoint(name: str = Form(...), age: int = Form(...)):
     return ApiResponse.success(
         data={
             "status": "ok",
-            "environment": ENV,
             "message": name
         },
         message="222"
