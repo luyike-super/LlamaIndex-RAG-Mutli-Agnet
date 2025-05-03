@@ -14,6 +14,7 @@ class LLMConfig:
     
     # DashScope配置 (千问)
     DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY")
+    DASHSCOPE_WORKSPACE_ID = os.getenv("DASHSCOPE_WORKSPACE_ID")
     QIANWEN_MODEL = os.getenv("QIANWEN_MODEL", "qwen-plus")
     
     # OpenAI配置
@@ -55,6 +56,7 @@ class LLMConfig:
         config = {
             "model_name": cls.QIANWEN_MODEL,
             "api_key": cls.DASHSCOPE_API_KEY,
+            "workspace_id": cls.DASHSCOPE_WORKSPACE_ID,
         }
         config.update(kwargs)
         return config
@@ -75,6 +77,7 @@ class LLMConfig:
         config = {
             "model_name": cls.DASHSCOPE_EMBEDDING_MODEL,
             "api_key": cls.DASHSCOPE_API_KEY,
+            "workspace_id": cls.DASHSCOPE_WORKSPACE_ID,
         }
         config.update(kwargs)
         return config
