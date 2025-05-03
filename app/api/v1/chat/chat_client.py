@@ -46,3 +46,30 @@ async def chat(request: ChatRequest = Body(...)) -> ApiResponse:
     except Exception as e:
         # 捕获所有异常
         return ApiResponse.error(message=f"处理聊天请求失败: {str(e)}")
+
+"""
+    背景： 采用post body 方式， 传入json 数据， 
+           传入json格式 { "a" : "b" , "c" : "d","e" : "f"}
+
+    要求： 使用FastAPI依赖注入的方式， 把传入的json 数据，拼接为字符串， 比如：
+           a=b&c=d&e=f
+           
+    
+"""
+from typing import Dict
+from fastapi import Depends
+from pydantic import BaseModel
+
+class QueryParams(BaseModel):
+    """请求参数模型"""
+    a: str
+    c: str
+    e: str
+
+def get_query_string(params: QueryParams = Depends()) -> str:
+    """将请求参数转换为查询字符串"""
+    return f"a={params.a}&c={params.c}&e={params.e}"
+
+@router.post("/test")
+async def chat(query_string: str = Depends(get_query_string)) -> ApiResponse:
+    return ApiResponse.success(data=query_string, message="测试成功")

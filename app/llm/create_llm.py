@@ -6,6 +6,7 @@ from llama_index.core import Settings
 from app.core.config import settings
 
 def llm_deepseek(model=None, temperature=0.1):
+
     """创建一个DeepSeek LLM客户端实例
 
     Args:
