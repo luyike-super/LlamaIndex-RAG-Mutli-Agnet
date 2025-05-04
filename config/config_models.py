@@ -21,6 +21,11 @@ class LLMConfig:
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
     OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
     
+    # OpenAI HK配置
+    OPENAI_HK_API_KEY = os.getenv("OPENAI_HK_API_KEY")
+    OPENAI_HK_API_BASE = os.getenv("OPENAI_HK_API_BASE", "https://api.openai-hk.com")
+    OPENAI_HK_MODEL = os.getenv("OPENAI_HK_MODEL", "gpt4")
+    
     # 千问OpenAI兼容模式配置
     QIANWEN_OPENAI_BASE = "https://dashscope.aliyuncs.com/compatible-mode/v1"
     
@@ -67,6 +72,20 @@ class LLMConfig:
         config = {
             "api_key": cls.OPENAI_API_KEY,
             "model": cls.OPENAI_MODEL,
+        }
+        config.update(kwargs)
+        return config
+    
+    @classmethod
+    def get_openai_hk_config(cls, **kwargs) -> Dict[str, Any]:
+        """获取OpenAI HK配置"""
+        config = {
+            "api_key": cls.OPENAI_HK_API_KEY,
+            "api_base": cls.OPENAI_HK_API_BASE,
+            "model": cls.OPENAI_HK_MODEL,
+            "additional_headers": {
+                "Content-Type": "application/json"
+            }
         }
         config.update(kwargs)
         return config

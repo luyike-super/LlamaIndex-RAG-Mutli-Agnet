@@ -3,5 +3,6 @@
 """
 
 from .reader import default_reader
+from .ingestion_pipeline import run_ingestion_pipeline
 
-__all__ = ["default_reader"] 
+__all__ = ["default_reader","run_ingestion_pipeline"] 

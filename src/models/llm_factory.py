@@ -10,6 +10,7 @@ class LLMProviderType(Enum):
     OPENAI = "openai"
     QIANWENOPENAI = "qianwenopenai"
     QIANWENDASHSCOPE = "qianwendashscope"
+    OPENAI_HK = "openai_hk"
     def __str__(self) -> str:
         return self.value 
 
@@ -91,6 +92,31 @@ class OpenAIProvider(LLMProvider):
         
         return OpenAI(**config)
 
+class OpenAIHKProvider(LLMProvider):
+    """OpenAI 香港区域提供商实现"""
+    
+    def get_llm(self, **kwargs) -> Any:
+        from llama_index.llms.openai import OpenAI
+        
+        # 从配置类获取配置
+        config = LLMConfig.get_openai_hk_config()
+        
+        # 使用传入的参数覆盖默认配置
+        if "model" in kwargs:
+            config["model"] = kwargs.pop("model")
+        if "api_base" in kwargs:
+            config["api_base"] = kwargs.pop("api_base")
+        if "api_key" in kwargs:
+            config["api_key"] = kwargs.pop("api_key")
+            
+        # 确保API基础URL正确
+        if not config["api_base"].endswith("/v1"):
+            config["api_base"] = f"{config['api_base']}/v1"
+            
+        config.update(kwargs)
+        
+        return OpenAI(**config)
+
 class LLMFactory:
     """LLM工厂类，用于创建不同的LLM实例"""
     
@@ -99,7 +125,8 @@ class LLMFactory:
         LLMProviderType.DEEPSEEK: DeepSeekProvider,
         LLMProviderType.OPENAI: OpenAIProvider,
         LLMProviderType.QIANWENOPENAI: QianWenProviderWithOpenAILike,
-        LLMProviderType.QIANWENDASHSCOPE: QianWenProviderWithDashScope
+        LLMProviderType.QIANWENDASHSCOPE: QianWenProviderWithDashScope,
+        LLMProviderType.OPENAI_HK: OpenAIHKProvider
     }
     
     @classmethod
