@@ -16,7 +16,8 @@ def create_pipeline():
         transformations=[
             DataCleanerTransform(),  # 数据清洗，实例化类
             DocumentURLNormalizerTransform(),  # 文档URL规范化，实例化类
-            CategoryExtract()  # 分类提取，实例化类
+            CategoryExtract(),  # 分类提取，实例化类
+            DocsSummarizerTransform()  # 文档摘要，实例化类
         ]
     )
 
