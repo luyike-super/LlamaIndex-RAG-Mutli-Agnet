@@ -9,7 +9,7 @@ from src.utils import transform_logger
 文档路径进行标准化： 比如"c:/aaa/bbb/data/docs/example.md" 转换为 "data/example.md"
 """
 
-class DocumentURLNormalizer(TransformComponent):
+class DocumentURLNormalizerTransform(TransformComponent):
 
   data_path: str = Field(
     default='./data',

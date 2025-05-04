@@ -5,7 +5,7 @@ from llama_index.core.bridge.pydantic import Field
 from llama_index.core.response_synthesizers import TreeSummarize
 from llama_index.llms.openai import OpenAI
 
-class DocsSummarizer(TransformComponent):
+class DocsSummarizerTransform(TransformComponent):
   """对当前文档页面进行摘要。"""
 
   llm: str = Field(

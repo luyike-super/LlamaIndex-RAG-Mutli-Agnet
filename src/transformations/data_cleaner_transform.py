@@ -7,7 +7,7 @@ from llama_index.core.bridge.pydantic import Field
 
 from src.utils import transform_logger
 
-class DataCleaner(TransformComponent):
+class DataCleanerTransform(TransformComponent):
     """数据清洗"""
     def __call__(self, nodes, **kwargs):
         transform_logger.info("开始数据清洗" + str(len(nodes)) + "条数据")

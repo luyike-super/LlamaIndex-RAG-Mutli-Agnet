@@ -1,0 +1,10 @@
+2025-05-04 08:58:47 - llamakb - INFO - logger_util.py:101 - 开始数据清洗1条数据
+2025-05-04 09:25:16 - llamakb - INFO - logger_util.py:101 - 开始数据清洗1条数据
+2025-05-04 09:26:59 - llamakb - INFO - logger_util.py:101 - 开始数据清洗2条数据
+2025-05-04 09:27:49 - llamakb - INFO - logger_util.py:101 - 开始数据清洗2条数据
+2025-05-04 09:57:10 - llamakb - INFO - logger_util.py:101 - 正在处理 2 个节点的类别提取
+2025-05-04 09:57:10 - llamakb - WARNING - logger_util.py:104 - 无法从文件 手机的区别.pdf 提取类别
+2025-05-04 09:57:10 - llamakb - WARNING - logger_util.py:104 - 无法从文件 手机的区别.pdf 提取类别
+2025-05-04 09:57:10 - llamakb - INFO - logger_util.py:101 - 类别提取完成
+2025-05-04 09:59:25 - llamakb - INFO - logger_util.py:101 - 正在处理 2 个节点的类别提取
+2025-05-04 09:59:25 - llamakb - INFO - logger_util.py:101 - 类别提取完成

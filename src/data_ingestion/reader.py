@@ -8,12 +8,12 @@ from config.config_rag import DOCUMENT_CONFIG
 
 
 # 默认reader实例
-default_reader = SimpleDirectoryReader(input_dir=DOCUMENT_CONFIG.DATA_DIR, 
+default_reader = SimpleDirectoryReader(input_dir=DOCUMENT_CONFIG["input_dir"], 
                                        recursive=True, 
                                        required_exts=[".pdf", ".docx", ".md"],
                                        file_extractor={
                                               ".md":FlatReader,
                                               ".mdx":FlatReader,
                                               ".docx":DocxReader, 
-                                        }) 
+                                        }).load_data()
 
