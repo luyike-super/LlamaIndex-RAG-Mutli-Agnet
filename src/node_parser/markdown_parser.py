@@ -80,6 +80,16 @@ class CustomMarkdownNodeParser(MarkdownNodeParser):
         node.text = md_reader.remove_images(node.text)
 
         if self.include_metadata:
-            node.metadata = {**node.metadata, **metadata}
+            # 处理node.metadata和metadata为字符串的情况
+            current_metadata = {}
+            if isinstance(node.metadata, dict):
+                current_metadata = node.metadata
+                
+            # 确保metadata参数也是字典
+            meta_dict = {}
+            if isinstance(metadata, dict):
+                meta_dict = metadata
+                
+            node.metadata = {**current_metadata, **meta_dict}
 
         return node

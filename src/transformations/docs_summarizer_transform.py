@@ -15,6 +15,9 @@ class DocsSummarizerTransform(TransformComponent):
       try:
           summary = await summarizer.aget_response(prompt, [node.text])
           print(f"节点 {node.id_} 摘要生成成功: {summary[:50]}...")
+          # 确保metadata是字典类型
+          if not isinstance(node.metadata, dict):
+              node.metadata = {}
           node.metadata['summary'] = summary
       except Exception as e:
           print(f"节点 {node.id_} 摘要生成失败: {str(e)}")

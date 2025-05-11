@@ -18,7 +18,11 @@ class CategoryExtract(TransformComponent):
         transform_logger.info(f"正在处理 {len(nodes)} 个节点的类别提取")
         
         for node in nodes:
-            if hasattr(node, 'metadata') and 'file_name' in node.metadata:
+            # 确保metadata是字典类型
+            if not isinstance(node.metadata, dict):
+                node.metadata = {}
+                
+            if 'file_name' in node.metadata:
                 file_name = node.metadata['file_name']
                 
                 # 尝试从文件名中提取类别（假设格式为：类别_文件名.扩展名）

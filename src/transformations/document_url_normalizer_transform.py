@@ -18,6 +18,11 @@ class DocumentURLNormalizerTransform(TransformComponent):
 
   def __call__(self, nodes, **kwargs):
     for node in nodes:
-      node.metadata["file_path"], _ = splitext(relpath(node.metadata['file_path'], self.data_path+"/docs"))
-      transform_logger.debug("文档路径标准化完成  " + node.metadata["file_path"])
+      # 确保metadata是字典类型
+      if not isinstance(node.metadata, dict):
+          node.metadata = {}
+      # 确保file_path键存在
+      if 'file_path' in node.metadata:
+        node.metadata["file_path"], _ = splitext(relpath(node.metadata['file_path'], self.data_path+"/docs"))
+        transform_logger.debug("文档路径标准化完成  " + node.metadata["file_path"])
     return nodes

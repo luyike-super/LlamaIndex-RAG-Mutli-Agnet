@@ -5,10 +5,10 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from src.data_ingestion import run_ingestion_pipeline
-from src.indices.index import test_load_docs
+from src.indices.index import build_tool_agents
 if __name__ == "__main__":
     # 获取文档查询引擎字典
-    doc_engines = test_load_docs()
+    doc_engines = build_tool_agents()
     print(f"成功加载 {len(doc_engines)} 个文档查询引擎")
     
     # 遍历文档ID和对应的查询引擎
