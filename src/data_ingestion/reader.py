@@ -29,3 +29,4 @@ default_reader = SimpleDirectoryReader(input_dir=DOCUMENT_CONFIG["input_dir"],
                                               ".docx": CustomDocxReader(), 
                                         }).load_data()
 
+
