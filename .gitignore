@@ -19,7 +19,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-000
+
 # 环境相关
 .env
 .venv
