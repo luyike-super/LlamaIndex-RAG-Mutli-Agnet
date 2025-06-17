@@ -7,7 +7,7 @@ from llama_index.core.indices import VectorStoreIndex
 from llama_index.core.indices.loading import load_index_from_storage
 from llama_index.core.agent import ReActAgent
 from src.models import LLMFactory, EmbeddingFactory, LLMProviderType, EmbeddingProviderType
-from src.data_ingestion.ingestion_pipeline import run_ingestion_pipeline
+from src.data_ingestion.ingestion_pipeline import run_ingestion_pipeline, run_ingestion_pipeline_with_smart_chunking
 from typing import List, Dict, Optional, Any
 from llama_index.core.objects.tool_node_mapping import SimpleToolNodeMapping
 from llama_index.core.callbacks import CallbackManager
@@ -19,6 +19,8 @@ import time
 import requests
 from llama_index.core.schema import BaseNode
 from llama_index.core.storage.docstore import SimpleDocumentStore, DocumentStore
+from src.query_engine.enhanced_query_engine import create_enhanced_query_engine
+from config.config_rag import RETRIEVAL_CONFIG
 
 # 配置基本日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -166,39 +168,69 @@ def load_nodes_from_disk(store_name: str = "processed_nodes") -> Optional[List[B
 def build_query_engine(docs: list[TextNode]) -> Dict:
     """
     构建文档查询引擎，带有缓存机制。
-    根据文档类别（doc.metadata.category）对查询引擎进行分组。
+    将属于同一原始文档的节点组合在一起，创建统一的查询引擎。
     
     Args:
-        docs: 文档列表
+        docs: 文档节点列表（已切分的节点）
     
     Returns:
         Dict: 包含两个字典: 
-            - 'by_id': 以文档ID为键的查询引擎字典
-            - 'by_category': 以类别为键、文档ID列表为值的字典
+            - 'by_id': 以原始文档ID为键的查询引擎字典
+            - 'by_category': 以类别为键、原始文档ID列表为值的字典
     """
     ensure_storage_dir_exists()
 
-    # 构建查询引擎字典 - 按ID索引
-    engines_by_id = {}
+    # 按原始文档ID分组节点
+    docs_by_original_id = {}
     
-    # 构建查询引擎字典 - 按类别分组
+    for doc in docs:
+        # 尝试获取原始文档ID，LlamaIndex使用ref_doc_id来标识原始文档
+        original_doc_id = None
+        
+        # 优先使用ref_doc_id（LlamaIndex标准字段）
+        if hasattr(doc, 'ref_doc_id') and doc.ref_doc_id:
+            original_doc_id = doc.ref_doc_id
+        elif hasattr(doc, 'metadata') and doc.metadata:
+            # 尝试从metadata中获取原始文档ID
+            original_doc_id = doc.metadata.get('doc_id') or doc.metadata.get('document_id')
+        
+        # 如果没有原始文档ID，使用当前节点的ID（说明这就是原始文档）
+        if not original_doc_id:
+            original_doc_id = doc.id_
+        
+        # 将节点按原始文档ID分组
+        if original_doc_id not in docs_by_original_id:
+            docs_by_original_id[original_doc_id] = {
+                'nodes': [],
+                'category': '未分类',
+                'metadata': {}
+            }
+        
+        docs_by_original_id[original_doc_id]['nodes'].append(doc)
+        
+        # 获取类别信息（所有节点应该有相同的类别）
+        if hasattr(doc, 'metadata') and doc.metadata and 'category' in doc.metadata:
+            docs_by_original_id[original_doc_id]['category'] = doc.metadata['category']
+            docs_by_original_id[original_doc_id]['metadata'] = doc.metadata
+
+    logger.info(f"将 {len(docs)} 个节点按原始文档分组，得到 {len(docs_by_original_id)} 个原始文档")
+
+    # 构建查询引擎字典
+    engines_by_id = {}
     engines_by_category = {}
     
-    for idx, doc in enumerate(docs):
-        all_nodes = []
-        # 根据文档类型选择适当的解析器
-        node_parser = get_parser_for_document(doc)
+    for original_doc_id, doc_info in docs_by_original_id.items():
+        nodes = doc_info['nodes']
+        category = doc_info['category']
         
-        # 使用选择的解析器处理文档
-        nodes = node_parser.get_nodes_from_documents([doc])
-        all_nodes.extend(nodes)
+        logger.info(f"为原始文档 {original_doc_id} 创建查询引擎，包含 {len(nodes)} 个节点")
         
-        # 缓存路径
-        cache_path = f"./{VECTOR_CACHE_DIR}/{doc.id_}"
+        # 缓存路径使用原始文档ID
+        cache_path = f"./{VECTOR_CACHE_DIR}/{original_doc_id}"
         
         # 检查是否有缓存
         if os.path.exists(cache_path):
-            logger.info(f"从缓存加载文档 {doc.id_} 的向量索引")
+            logger.info(f"从缓存加载文档 {original_doc_id} 的向量索引")
             try:
                 vector_index = load_index_from_storage(
                     StorageContext.from_defaults(
@@ -207,35 +239,43 @@ def build_query_engine(docs: list[TextNode]) -> Dict:
                 )
             except Exception as e:
                 logger.warning(f"从缓存加载索引失败: {e}，将重建索引")
-                vector_index = VectorStoreIndex(all_nodes)
-                # 保存到缓存
+                vector_index = VectorStoreIndex(nodes)
                 vector_index.storage_context.persist(persist_dir=cache_path)
         else:
-            logger.info(f"为文档 {doc.id_} 创建新的向量索引并缓存")
-            # 构建新的索引并缓存
-            vector_index = VectorStoreIndex(all_nodes)
-            # 保存到缓存
+            logger.info(f"为文档 {original_doc_id} 创建新的向量索引并缓存")
+            # 直接使用已切分的节点创建索引
+            vector_index = VectorStoreIndex(nodes)
             vector_index.storage_context.persist(persist_dir=cache_path)
 
-        # 创建查询引擎
-        vector_query_engine = vector_index.as_query_engine()
+        # 创建增强的查询引擎
+        try:
+            # 创建callback_manager
+            callback_manager = CallbackManager([])
+            
+            vector_query_engine = create_enhanced_query_engine(
+                vector_index, 
+                callback_manager=callback_manager
+            )
+            logger.info(f"为文档 {original_doc_id} 创建了增强查询引擎")
+        except Exception as e:
+            logger.warning(f"创建增强查询引擎失败，使用默认引擎: {e}")
+            vector_query_engine = vector_index.as_query_engine(
+                similarity_top_k=RETRIEVAL_CONFIG.get("similarity_top_k", 10)
+            )
         
         # 存储到ID映射
-        engines_by_id[doc.id_] = vector_query_engine
-        
-        # 获取文档类别
-        category = "未分类"
-        if hasattr(doc, 'metadata') and 'category' in doc.metadata:
-            category = doc.metadata['category']
+        engines_by_id[original_doc_id] = vector_query_engine
         
         # 将文档ID添加到对应类别
         if category not in engines_by_category:
             engines_by_category[category] = []
-        engines_by_category[category].append(doc.id_)
+        engines_by_category[category].append(original_doc_id)
 
+    logger.info(f"成功创建 {len(engines_by_id)} 个查询引擎")
+    
     return {
-        "by_id": engines_by_id,   # 以文档ID为键的查询引擎字典
-        "by_category": engines_by_category  # 以类别为键、文档ID列表为值的字典
+        "by_id": engines_by_id,   # 以原始文档ID为键的查询引擎字典
+        "by_category": engines_by_category  # 以类别为键、原始文档ID列表为值的字典
     }
 
 """
@@ -256,8 +296,9 @@ def build_tool_agents() -> Dict:
             logger.info("已加载持久化的节点数据")
             docs = loaded_nodes
         else:
-            # 如果没有持久化节点，调用ingestion_pipeline处理文档
-            docs = run_ingestion_pipeline()
+            # 如果没有持久化节点，使用智能切分管道处理文档
+            logger.info("使用智能切分管道处理文档...")
+            docs = run_ingestion_pipeline_with_smart_chunking()
             # 将处理后的节点持久化保存
             save_nodes_to_disk(docs)
             # 重新加载
@@ -427,11 +468,15 @@ def _build_agent_for_category(
         # 使用DeepSeek作为LLM   
         llm = LLMFactory.create_llm(LLMProviderType.QIANWENOPENAI)
         
+        # 创建callback_manager
+        callback_manager = CallbackManager([])
+        
         # 使用ReActAgent替代OpenAIAgent
         category_agent = ReActAgent.from_tools(
             tool_retriever=obj_index.as_retriever(similarity_top_k=7),
             llm=llm,
             verbose=True,
+            callback_manager=callback_manager,
             system_prompt=f""" \
         您是一个回答关于{category}类别问题的代理。
         请始终使用提供的工具来回答问题。不要依赖先验知识。使用清晰详细的查询传递工具，然后充分利用它们的响应来回答原始查询。

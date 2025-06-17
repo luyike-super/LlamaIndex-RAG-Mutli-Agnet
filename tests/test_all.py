@@ -15,5 +15,5 @@ if __name__ == "__main__":
     for doc_id, engine in doc_engines.items():
         print(f"\n===== 文档 {doc_id} 的查询结果 =====")
         # 调用查询引擎的query方法
-        response = engine.query("小行星是什么?")
+        response = engine.query(" 如何使用硬件控制模式，把输出类型设置为 HCSL")
         print(response)

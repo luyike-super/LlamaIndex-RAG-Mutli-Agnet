@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 环境激活
+使用终端命令，必须激活 "llamaindex" , 比如： 
+'''
+conda activate llamaindex
+'''
